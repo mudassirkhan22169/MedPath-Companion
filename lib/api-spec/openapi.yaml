@@ -3,20 +3,36 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: MedPath API – AI Ward & Clinical Companion
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: notes
+    description: Clinical notes
+  - name: diseases
+    description: Disease library
+  - name: drugs
+    description: Drug guide
+  - name: investigations
+    description: Investigation interpreter
+  - name: ai
+    description: AI clinical assistant
+  - name: dashboard
+    description: Dashboard statistics
+  - name: profile
+    description: User profile
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +40,396 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # Auth
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current user
+      responses:
+        "200":
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # Profile
+  /profile:
+    patch:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # Dashboard
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics for the current user
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  # Notes
+  /notes:
+    get:
+      operationId: getNotes
+      tags: [notes]
+      summary: List notes for current user
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+    post:
+      operationId: createNote
+      tags: [notes]
+      summary: Create a new note
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteInput"
+      responses:
+        "201":
+          description: Created note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+
+  /notes/{id}:
+    get:
+      operationId: getNote
+      tags: [notes]
+      summary: Get a specific note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateNote
+      tags: [notes]
+      summary: Update a note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteUpdate"
+      responses:
+        "200":
+          description: Updated note
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+    delete:
+      operationId: deleteNote
+      tags: [notes]
+      summary: Delete a note
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # Diseases
+  /diseases:
+    get:
+      operationId: getDiseases
+      tags: [diseases]
+      summary: List diseases with optional search and filter
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of diseases
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiseaseListResponse"
+
+  /diseases/{id}:
+    get:
+      operationId: getDisease
+      tags: [diseases]
+      summary: Get disease details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Disease
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Disease"
+        "404":
+          description: Not found
+
+  /diseases/categories:
+    get:
+      operationId: getDiseaseCategories
+      tags: [diseases]
+      summary: Get all disease categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  # Drugs
+  /drugs:
+    get:
+      operationId: getDrugs
+      tags: [drugs]
+      summary: List drugs with optional search and filter
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: class
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of drugs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DrugListResponse"
+
+  /drugs/{id}:
+    get:
+      operationId: getDrug
+      tags: [drugs]
+      summary: Get drug details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Drug
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Drug"
+        "404":
+          description: Not found
+
+  /drugs/classes:
+    get:
+      operationId: getDrugClasses
+      tags: [drugs]
+      summary: Get all drug classes
+      responses:
+        "200":
+          description: List of drug classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  # Investigations
+  /investigations:
+    get:
+      operationId: getInvestigations
+      tags: [investigations]
+      summary: List investigations with optional search and filter
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of investigations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Investigation"
+
+  /investigations/{id}:
+    get:
+      operationId: getInvestigation
+      tags: [investigations]
+      summary: Get investigation details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Investigation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Investigation"
+        "404":
+          description: Not found
+
+  /investigations/interpret:
+    post:
+      operationId: interpretInvestigation
+      tags: [investigations]
+      summary: Interpret investigation results using AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterpretationRequest"
+      responses:
+        "200":
+          description: AI interpretation of the investigation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterpretationResponse"
+
+  # AI Clinical Assistant
+  /ai/chat:
+    post:
+      operationId: aiChat
+      tags: [ai]
+      summary: Send a message to the AI clinical assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatInput"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiReply"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +440,394 @@ components:
       required:
         - status
 
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        year:
+          type: ["integer", "null"]
+        university:
+          type: ["string", "null"]
+        specialization:
+          type: ["string", "null"]
+        bio:
+          type: ["string", "null"]
+        avatar:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - createdAt
+
+    ProfileUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        year:
+          type: integer
+        university:
+          type: string
+        specialization:
+          type: string
+        bio:
+          type: string
+
+    DashboardStats:
+      type: object
+      properties:
+        totalNotes:
+          type: integer
+        notesThisWeek:
+          type: integer
+        diseasesSaved:
+          type: integer
+        drugsSaved:
+          type: integer
+        recentNotes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Note"
+        studyStreak:
+          type: integer
+        aiChatsToday:
+          type: integer
+      required:
+        - totalNotes
+        - notesThisWeek
+        - diseasesSaved
+        - drugsSaved
+        - recentNotes
+        - studyStreak
+        - aiChatsToday
+
+    Note:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        category:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        isPinned:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - title
+        - content
+        - tags
+        - isPinned
+        - createdAt
+        - updatedAt
+
+    NoteInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        content:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        isPinned:
+          type: boolean
+      required:
+        - title
+        - content
+
+    NoteUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        content:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        isPinned:
+          type: boolean
+
+    Disease:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        category:
+          type: string
+        icdCode:
+          type: ["string", "null"]
+        description:
+          type: string
+        symptoms:
+          type: array
+          items:
+            type: string
+        causes:
+          type: array
+          items:
+            type: string
+        riskFactors:
+          type: array
+          items:
+            type: string
+        diagnosis:
+          type: string
+        investigations:
+          type: array
+          items:
+            type: string
+        treatment:
+          type: string
+        complications:
+          type: array
+          items:
+            type: string
+        prevention:
+          type: ["string", "null"]
+        prognosis:
+          type: ["string", "null"]
+      required:
+        - id
+        - name
+        - category
+        - description
+        - symptoms
+        - causes
+        - riskFactors
+        - diagnosis
+        - investigations
+        - treatment
+        - complications
+
+    DiseaseListResponse:
+      type: object
+      properties:
+        diseases:
+          type: array
+          items:
+            $ref: "#/components/schemas/Disease"
+        total:
+          type: integer
+      required:
+        - diseases
+        - total
+
+    Drug:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        genericName:
+          type: string
+        brandNames:
+          type: array
+          items:
+            type: string
+        drugClass:
+          type: string
+        mechanism:
+          type: string
+        indications:
+          type: array
+          items:
+            type: string
+        contraindications:
+          type: array
+          items:
+            type: string
+        dosage:
+          type: string
+        sideEffects:
+          type: array
+          items:
+            type: string
+        interactions:
+          type: array
+          items:
+            type: string
+        pregnancy:
+          type: ["string", "null"]
+        monitoring:
+          type: ["string", "null"]
+      required:
+        - id
+        - name
+        - genericName
+        - brandNames
+        - drugClass
+        - mechanism
+        - indications
+        - contraindications
+        - dosage
+        - sideEffects
+        - interactions
+
+    DrugListResponse:
+      type: object
+      properties:
+        drugs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Drug"
+        total:
+          type: integer
+      required:
+        - drugs
+        - total
+
+    Investigation:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        abbreviation:
+          type: ["string", "null"]
+        category:
+          type: string
+        normalRange:
+          type: string
+        units:
+          type: ["string", "null"]
+        interpretation:
+          type: string
+        significance:
+          type: string
+        relatedConditions:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - category
+        - normalRange
+        - interpretation
+        - significance
+        - relatedConditions
+
+    InterpretationRequest:
+      type: object
+      properties:
+        investigationName:
+          type: string
+        value:
+          type: string
+        units:
+          type: string
+        patientContext:
+          type: string
+      required:
+        - investigationName
+        - value
+
+    InterpretationResponse:
+      type: object
+      properties:
+        interpretation:
+          type: string
+        status:
+          type: string
+          enum: [normal, low, high, critical]
+        clinicalSignificance:
+          type: string
+        possibleConditions:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: string
+      required:
+        - interpretation
+        - status
+        - clinicalSignificance
+        - possibleConditions
+        - recommendations
+
+    AiChatInput:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+        conversationHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+        context:
+          type: string
+      required:
+        - message
+
+    ChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+      required:
+        - role
+        - content
+
+    AiReply:
+      type: object
+      properties:
+        reply:
+          type: string
+        sources:
+          type: array
+          items:
+            type: string
+      required:
+        - reply
+        - sources

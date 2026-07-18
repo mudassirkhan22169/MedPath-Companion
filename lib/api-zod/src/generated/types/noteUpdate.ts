@@ -6,6 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface NoteUpdate {
+  /** @minLength 1 */
+  title?: string;
+  content?: string;
+  category?: string;
+  tags?: string[];
+  isPinned?: boolean;
 }

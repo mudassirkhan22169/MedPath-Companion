@@ -5,7 +5,9 @@
  * MedPath API – AI Ward & Clinical Companion
  * OpenAPI spec version: 0.1.0
  */
+import type { Disease } from './disease';
 
-export interface HealthStatus {
-  status: string;
+export interface DiseaseListResponse {
+  diseases: Disease[];
+  total: number;
 }

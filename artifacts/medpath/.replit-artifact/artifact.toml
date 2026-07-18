@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "MedPath – AI Ward & Clinical Companion"
+version = "1.0.0"
+id = "artifacts/medpath"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25554
+
+[services.development]
+run = "pnpm --filter @workspace/medpath run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/medpath", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/medpath/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25554"
+BASE_PATH = "/"
