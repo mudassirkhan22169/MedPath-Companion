@@ -44,7 +44,7 @@ async function callAI(messages: Array<{ role: string; content: string }>): Promi
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-5.6-luna",
+        model: "gpt-4o-mini",
         max_completion_tokens: 1500,
         messages,
       }),

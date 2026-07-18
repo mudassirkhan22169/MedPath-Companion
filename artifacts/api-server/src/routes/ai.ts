@@ -68,7 +68,7 @@ async function callAI(
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-5.6-luna",
+        model: "gpt-4o-mini",
         max_completion_tokens: maxTokens,
         messages,
       }),
