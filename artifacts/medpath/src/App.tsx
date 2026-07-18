@@ -3,29 +3,50 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { AuthProvider, ProtectedRoute } from '@/components/auth-provider';
+import { AppLayout } from '@/components/layout';
+
+import Landing from '@/pages/landing';
+import Login from '@/pages/login';
+import Register from '@/pages/register';
+import Dashboard from '@/pages/dashboard';
+import AiAssistant from '@/pages/ai-assistant';
+import DiseaseLibrary from '@/pages/disease-library';
+import DrugGuide from '@/pages/drug-guide';
+import InvestigationInterpreter from '@/pages/investigation-interpreter';
+import Notes from '@/pages/notes';
+import Profile from '@/pages/profile';
 
 const queryClient = new QueryClient();
 
-function Home() {
+function ProtectedRoutes() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Replit Agent is building...
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Your app will appear here once it's ready.
-        </p>
-      </div>
-    </div>
+    <ProtectedRoute>
+      <AppLayout>
+        <Switch>
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/ai-assistant" component={AiAssistant} />
+          <Route path="/disease-library" component={DiseaseLibrary} />
+          <Route path="/drug-guide" component={DrugGuide} />
+          <Route path="/investigation-interpreter" component={InvestigationInterpreter} />
+          <Route path="/notes" component={Notes} />
+          <Route path="/profile" component={Profile} />
+          <Route component={NotFound} />
+        </Switch>
+      </AppLayout>
+    </ProtectedRoute>
   );
 }
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route component={NotFound} />
+      <Route path="/" component={Landing} />
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
+      
+      {/* Fallback to protected routes for anything else */}
+      <Route component={ProtectedRoutes} />
     </Switch>
   );
 }
@@ -35,9 +56,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
+          <AuthProvider>
+            <Router />
+            <Toaster />
+          </AuthProvider>
         </WouterRouter>
-        <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
   );
