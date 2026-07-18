@@ -16,6 +16,9 @@ import DrugGuide from '@/pages/drug-guide';
 import InvestigationInterpreter from '@/pages/investigation-interpreter';
 import Notes from '@/pages/notes';
 import Profile from '@/pages/profile';
+import OscePractice from '@/pages/osce-practice';
+import WardRoundChecklist from '@/pages/ward-round-checklist';
+import Calculators from '@/pages/calculators';
 
 const queryClient = new QueryClient();
 
@@ -31,6 +34,9 @@ function ProtectedRoutes() {
           <Route path="/investigation-interpreter" component={InvestigationInterpreter} />
           <Route path="/notes" component={Notes} />
           <Route path="/profile" component={Profile} />
+          <Route path="/osce-practice" component={OscePractice} />
+          <Route path="/ward-round-checklist" component={WardRoundChecklist} />
+          <Route path="/calculators" component={Calculators} />
           <Route component={NotFound} />
         </Switch>
       </AppLayout>
@@ -44,8 +50,6 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      
-      {/* Fallback to protected routes for anything else */}
       <Route component={ProtectedRoutes} />
     </Switch>
   );
