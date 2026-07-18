@@ -1,0 +1,1 @@
+- [MedPath upgrade decisions](medpath-upgrade.md) — key architecture and DB decisions for the v2 upgrade

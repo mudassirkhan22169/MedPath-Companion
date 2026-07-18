@@ -8,6 +8,9 @@ import drugsRouter from "./drugs";
 import investigationsRouter from "./investigations";
 import dashboardRouter from "./dashboard";
 import aiRouter from "./ai";
+import osceRouter from "./osce";
+import bookmarksRouter from "./bookmarks";
+import searchHistoryRouter from "./search-history";
 
 const router: IRouter = Router();
 
@@ -20,5 +23,8 @@ router.use(drugsRouter);
 router.use(investigationsRouter);
 router.use(dashboardRouter);
 router.use(aiRouter);
+router.use(osceRouter);
+router.use(bookmarksRouter);
+router.use(searchHistoryRouter);
 
 export default router;
