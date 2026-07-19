@@ -264,6 +264,7 @@ Planning software according to user requirements
 14. Conclusion
 
 MedPath demonstrates how artificial intelligence can support medical education by providing quick access to important clinical information. The application combines multiple learning resources into a single platform, helping MBBS students improve their efficiency during study and ward rotations. This project reflects practical problem-solving, modern web development, and the use of AI to enhance learning.
+
 15. Screenshots
 
 The application screenshots are available in this repository:
