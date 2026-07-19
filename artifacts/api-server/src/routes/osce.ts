@@ -30,30 +30,45 @@ function requireAuth(req: any, res: any): string | null {
   return userId;
 }
 
-async function callAI(messages: Array<{ role: string; content: string }>): Promise<string | null> {
-  const baseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || process.env.OPENAI_BASE_URL;
-  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
-
-  if (!baseUrl || !apiKey) return null;
+async function callGemini(
+  systemPrompt: string,
+  userPrompt: string,
+  jsonMode = false
+): Promise<string | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
 
   try {
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        max_completion_tokens: 1500,
-        messages,
-      }),
-    });
+    const generationConfig: Record<string, unknown> = { maxOutputTokens: 8192 };
+    if (jsonMode) {
+      generationConfig.responseMimeType = "application/json";
+    }
 
-    if (!response.ok) return null;
-    const data = await response.json() as { choices: Array<{ message: { content: string } }> };
-    return data.choices?.[0]?.message?.content ?? null;
-  } catch {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+          generationConfig,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const err = await response.text().catch(() => "");
+      console.error("Gemini API error:", response.status, err);
+      return null;
+    }
+
+    const data = (await response.json()) as {
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+    };
+    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+  } catch (e) {
+    console.error("Gemini call failed:", e);
     return null;
   }
 }
@@ -126,16 +141,12 @@ Return a JSON object with this exact structure:
   "modelAnswerSummary": "Brief summary of the key diagnosis and management approach (for reference — not shown to student)"
 }`;
 
-  const aiResponse = await callAI([
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt },
-  ]);
+  const aiResponse = await callGemini(systemPrompt, userPrompt, true);
 
   let caseData: Record<string, unknown>;
 
   if (aiResponse) {
     try {
-      // Strip markdown code fences if present
       const cleaned = aiResponse.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
       caseData = JSON.parse(cleaned);
     } catch {
@@ -221,10 +232,7 @@ Evaluate the student's answer and return JSON with this exact structure:
   "recommendedReading": ["Resource 1", "Resource 2"]
 }`;
 
-  const aiResponse = await callAI([
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userPrompt },
-  ]);
+  const aiResponse = await callGemini(systemPrompt, userPrompt, true);
 
   let feedback: Record<string, unknown>;
   let score = 0;

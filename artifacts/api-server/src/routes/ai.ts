@@ -51,35 +51,45 @@ Bullet list of warning signs requiring urgent/emergency escalation.
 ---
 Always include a brief disclaimer at the end: "⚕️ Clinical decisions must always be made by a qualified healthcare professional."`;
 
-async function callAI(
+async function callGemini(
+  systemPrompt: string,
   messages: Array<{ role: string; content: string }>,
-  maxTokens = 2000
+  maxTokens = 8192
 ): Promise<string | null> {
-  const baseUrl = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || process.env.OPENAI_BASE_URL;
-  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
-
-  if (!baseUrl || !apiKey) return null;
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
 
   try {
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        max_completion_tokens: maxTokens,
-        messages,
-      }),
-    });
+    const contents = messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
 
-    if (!response.ok) return null;
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents,
+          generationConfig: { maxOutputTokens: maxTokens },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const err = await response.text().catch(() => "");
+      console.error("Gemini API error:", response.status, err);
+      return null;
+    }
+
     const data = (await response.json()) as {
-      choices: Array<{ message: { content: string } }>;
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
     };
-    return data.choices?.[0]?.message?.content ?? null;
-  } catch {
+    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
+  } catch (e) {
+    console.error("Gemini call failed:", e);
     return null;
   }
 }
@@ -96,8 +106,7 @@ router.post("/ai/chat", async (req, res): Promise<void> => {
     const systemContent =
       STRUCTURED_SYSTEM_PROMPT + (context ? `\n\nAdditional context: ${context}` : "");
 
-    const messages = [
-      { role: "system", content: systemContent },
+    const userMessages = [
       ...(conversationHistory || []).map((m: { role: string; content: string }) => ({
         role: m.role,
         content: m.content,
@@ -105,7 +114,7 @@ router.post("/ai/chat", async (req, res): Promise<void> => {
       { role: "user", content: message },
     ];
 
-    const aiReply = await callAI(messages, 2000);
+    const aiReply = await callGemini(systemContent, userMessages, 8192);
 
     if (aiReply) {
       res.json({ reply: aiReply, sources: [] });
@@ -505,10 +514,10 @@ Supportive: Oxygen (target SpO2 94-98%; 88-92% in COPD), IV fluids if dehydrated
 
   // Generic structured fallback
   return `**Definition**
-Your query about "${message}" relates to an important clinical topic. Please connect the app to an AI service (enter your OpenAI API key in settings) for a complete, structured answer.
+Your query about "${message}" relates to an important clinical topic. Please add your Gemini API key (GEMINI_API_KEY) to enable full AI-powered clinical responses.
 
 **Causes**
-Detailed causes analysis requires AI integration. Please add your API key for full clinical content.
+Detailed causes analysis requires AI integration. Please ensure your GEMINI_API_KEY secret is configured.
 
 **Risk Factors**
 See reference: Harrison's Principles of Internal Medicine, Davidson's Clinical Medicine, or UpToDate.
@@ -535,7 +544,7 @@ See reference: Harrison's Principles of Internal Medicine, Davidson's Clinical M
 —
 
 **Clinical Pearls**
-🔑 For complete clinical content with all 13 sections, please add your OpenAI API key in the app settings.
+🔑 For complete clinical content with all 13 sections, please ensure your GEMINI_API_KEY secret is configured in the Replit Secrets panel.
 
 **Red Flags**
 For urgent clinical guidance, always consult a senior clinician or specialist.
