@@ -199,14 +199,14 @@ npm run dev
 
 Live Application
 
-Paste your Replit published URL here
+https://med-path-companion--mudassirkhan169.replit.app
 
 
 ---
 
 11. GitHub Repository
 
-Paste your GitHub repository URL here
+https://github.com/mudassirkhan22169/MedPath-Companion
 
 
 ---
